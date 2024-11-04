@@ -1,0 +1,25 @@
+# based on https://gist.github.com/CMCDragonkai/bf8e8b7553c48e4f65124bc6f41769eb
+$Code=@'
+[DllImport("kernel32.dll", CharSet = CharSet.Auto,SetLastError = true)]
+public static extern void SetThreadExecutionState(uint esFlags);
+'@
+
+$ste = Add-Type -memberDefinition $Code -name System -namespace Win32 -passThru
+
+# Requests that the other EXECUTION_STATE flags set remain in effect until
+# SetThreadExecutionState is called again with the ES_CONTINUOUS flag set and
+# one of the other EXECUTION_STATE flags cleared.
+$ES_CONTINUOUS = [uint32]"0x80000000"
+
+$ES_AWAYMODE_REQUIRED = [uint32]"0x00000040"
+$ES_DISPLAY_REQUIRED = [uint32]"0x00000002"
+$ES_SYSTEM_REQUIRED = [uint32]"0x00000001"
+
+try {
+    Write-Host "Staying awake... press enter to quit"
+    $ste::SetThreadExecutionState($ES_SYSTEM_REQUIRED -bor $ES_DISPLAY_REQUIRED -bor $ES_CONTINUOUS )
+    Read-Host "Enter or Exit to Stop Staying Awake"
+} finally {
+    Write-Host "Stopping Staying Awake"
+    $ste::SetThreadExecutionState($ES_CONTINUOUS)
+}
